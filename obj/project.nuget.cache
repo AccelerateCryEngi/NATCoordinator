@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "F6hT2jF5W90=",
+  "success": true,
+  "projectFilePath": "D:\\databases\\ArenaServer\\NATCoordinator\\NATCoordinator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Администратор\\.nuget\\packages\\litenetlib\\2.1.4\\litenetlib.2.1.4.nupkg.sha512"
+  ],
+  "logs": []
+}
