@@ -13,6 +13,34 @@ class Program
 
     static void Main(string[] args)
     {
+        // Специальный микро-сервер для прохождения проверки (Health Check) Render
+        Task.Run(() =>
+        {
+            try
+            {
+                string portEnv = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+                using HttpListener httpListener = new HttpListener();
+                httpListener.Prefixes.Add($"http://*:{portEnv}/");
+                httpListener.Start();
+                Console.WriteLine($"[HEALTH CHECK] HTTP-заглушка запущена на порту {portEnv}");
+
+                while (true)
+                {
+                    HttpListenerContext context = httpListener.GetContext();
+                    HttpListenerResponse response = context.Response;
+                    string responseString = "OK";
+                    byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                    response.ContentLength64 = buffer.Length;
+                    response.OutputStream.Write(buffer, 0, buffer.Length);
+                    response.OutputStream.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[HTTP ОШИБКА] {ex.Message}");
+            }
+        });
+
         EventBasedNetListener listener = new EventBasedNetListener();
         _server = new NetManager(listener);
 
