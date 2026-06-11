@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NATCoordinator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de9289bba8ae513265bff94d6ae9c9abd546513b")]
 [assembly: System.Reflection.AssemblyProductAttribute("NATCoordinator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NATCoordinator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
