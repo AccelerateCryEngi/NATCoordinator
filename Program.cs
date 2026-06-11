@@ -6,8 +6,10 @@ using LiteNetLib;
 class Program
 {
     // Хранилище активных комнат: Ключ = Токен комнаты, Значение = Конечная точка Хоста
-    private static Dictionary<string, IPEndPoint> _activeLobbies = new Dictionary<string, IPEndPoint>();
+    // Изменяем тип хранилища, чтобы сохранять И внутренний, И внешний IP хоста
+    private static Dictionary<string, (IPEndPoint Internal, IPEndPoint External)> _activeLobbies = new Dictionary<string, (IPEndPoint, IPEndPoint)>();
     private static NetManager _server;
+
 
     static void Main(string[] args)
     {
@@ -41,31 +43,39 @@ class Program
 
     private class NatPunchListener : INatPunchListener
     {
-        // Вызывается, когда Хост или Клиент присылают запрос координатору
         public void OnNatIntroductionRequest(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, string token)
         {
-            // Токен имеет формат "HOST:НазваниеКомнаты" или "CLIENT:НазваниеКомнаты"
+            // 1. Разбиваем токен "HOST:Имя" или "CLIENT:Имя" на части
             string[] parts = token.Split(':');
             if (parts.Length < 2) return;
 
-            string action = parts[0];
-            string roomName = parts[1];
+            string action = parts[0];   // HOST или CLIENT
+            string roomName = parts[1]; // Имя лобби
 
+            // 2. Логика для Хоста
             if (action == "HOST")
             {
-                // Запоминаем ВНЕШНИЙ IP и ПОРТ роутера Хоста, который определил наш сервер
-                _activeLobbies[roomName] = remoteEndPoint;
-                Console.WriteLine($"[РЕГИСТРАЦИЯ] Комната '{roomName}' зарегистрирована. Внешний IP Хоста: {remoteEndPoint}");
+                // Сохраняем КОРТЕЖ из локального и внешнего адресов Хоста
+                _activeLobbies[roomName] = (localEndPoint, remoteEndPoint);
+                Console.WriteLine($"[РЕГИСТРАЦИЯ] Комната '{roomName}' добавлена. Локальный: {localEndPoint}, Внешний: {remoteEndPoint}");
             }
+            // 3. Логика для Клиента
             else if (action == "CLIENT")
             {
-                if (_activeLobbies.TryGetValue(roomName, out IPEndPoint hostEndPoint))
+                // Извлекаем сохраненную пару адресов Хоста
+                if (_activeLobbies.TryGetValue(roomName, out var hostAddresses))
                 {
-                    Console.WriteLine($"[СВАХА] Клиент {remoteEndPoint} хочет зайти в '{roomName}'. Начинаем пробитие на Хост {hostEndPoint}...");
+                    Console.WriteLine($"[СВАХА] Клиент (Локальный: {localEndPoint}, Внешний: {remoteEndPoint}) запрашивает '{roomName}'. Знакомим игроков...");
 
-                    // Самый важный метод: Сервер отправляет ОДНОВРЕМЕННО два пакета.
-                    // Хосту он отсылает IP Клиента, а Клиенту — IP Хоста.
-                    _server.NatPunchModule.Introduce(hostEndPoint, remoteEndPoint, roomName);
+                    // Передаем ВСЕ 5 обязательных параметров:
+                    // 1. Внутренний Хоста, 2. Внешний Хоста, 3. Внутренний Клиента, 4. Внешний Клиента, 5. Имя комнаты
+                    _server.NatPunchModule.NatIntroduce(
+                        hostAddresses.Internal,
+                        hostAddresses.External,
+                        localEndPoint,
+                        remoteEndPoint,
+                        roomName
+                    );
                 }
                 else
                 {
@@ -74,9 +84,9 @@ class Program
             }
         }
 
-        public void OnNatIntroductionResult(IPEndPoint remoteEndPoint, NatResultType natResultType, string token)
+        public void OnNatIntroductionResult(IPEndPoint remoteEndPoint, NatAddressType natResultType, string token)
         {
-            // Этот метод на самом сервере-посреднике не используется, он нужен на клиентах
+            // На самом сервере-координаторе этот метод не используется (он нужен только игрокам)
         }
 
         public void OnNatIntroductionSuccess(IPEndPoint targetEndPoint, NatAddressType type, string token)
@@ -84,4 +94,5 @@ class Program
             throw new NotImplementedException();
         }
     }
+
 }
