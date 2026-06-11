@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Копируем файл проекта и скачиваем зависимости
-COPY ["NatCoordinator.csproj", "./"]
+COPY ["NATCoordinator.csproj", "./"]
 RUN dotnet restore
 
 # Копируем остальной код и собираем проект
@@ -17,4 +17,4 @@ COPY --from=build /app .
 EXPOSE 10000
 ENV PORT=10000
 
-ENTRYPOINT ["dotnet", "NatCoordinator.dll"]
+ENTRYPOINT ["dotnet", "NATCoordinator.dll"]
